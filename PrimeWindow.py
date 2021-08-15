@@ -8,6 +8,7 @@ from PIL import Image
 from pathlib import Path
 from win32api import GetSystemMetrics
 import os
+import pprint
 
 
 class PrimeWindow:
@@ -41,6 +42,10 @@ class PrimeWindow:
         self._y2 = 0
         self._lx = 0
         self._ly = 0
+        # Lootfilter file
+        self._lf_file_path=r'C:\Users\lanyn\Documents\My Games\Path of Exile\priest.filter'
+        self.load_lootfilter_file()
+        self._clean_word = ""
 
     def set_track_rectangle(self, width, height):
         self._track_rect_w, self._track_rect_h = width, height
@@ -56,22 +61,108 @@ class PrimeWindow:
             im = ImageGrab.grab(backend="pil", bbox=(int(self._x1), int(self._y1), int(self._x2), int(self._y2)))
             im.save(self._scrshot_save_name)
             word=image_to_string(Image.open(self._scrshot_save_name))
-            clean_word=""
+            self._clean_word=""
             big_letter=True
             for ch in word:
-                if ch.isalpha() or (ch == ' ' and len(clean_word)):
+                if ch.isalpha() or (ch == ' ' and len(self._clean_word)):
                     if big_letter:
-                        clean_word += ch
+                        self._clean_word += ch
                         big_letter=False
                     else:
-                        clean_word += ch.lower()
+                        self._clean_word += ch.lower()
                         if ch == ' ':
                             big_letter=True
 
            # print("Dirty: %s" % word)
-            print("Clean: %s" % clean_word)
+            self._clean_word = "\"%s\"" % self._clean_word.strip()
+            print("Clean: %s" % self._clean_word)
         except Exception as err:
             print(err)
+
+    def load_lootfilter_file(self):
+        self._lf_basic = []
+        self._lf_normal = []
+        self._lf_magic = []
+        self._lf_rare = []
+        with open(self._lf_file_path, 'r') as file:
+            for line in file:
+              #  pprint.pprint(line)
+                if len(self._lf_normal) == 0:
+                    if line.find('# Normal') != -1:
+                        print('Get normal')
+                        self._lf_normal.append(line)
+                    else:
+                        self._lf_basic.append(line)
+                elif len(self._lf_magic) == 0:
+                    if line.find('# Magic') != -1:
+                        print('Get magic')
+                        self._lf_magic.append(line)
+                    else:
+                        self._lf_normal.append(line)
+                elif len(self._lf_rare) == 0:
+                    if line.find('# Rare') != -1:
+                        print('Get rare')
+                        self._lf_rare.append(line)
+                    else:
+                        self._lf_magic.append(line)
+                else:
+                    self._lf_rare.append(line)
+                    
+        #pprint.pprint(self._lf_basic)
+    def save_lootfilter_file(self):
+        with open(self._lf_file_path, 'w') as file:
+            for line in self._lf_basic:
+                file.write(line)
+            for line in self._lf_normal:
+                file.write(line)
+            for line in self._lf_magic:
+                file.write(line)
+            for line in self._lf_rare:
+                file.write(line)
+
+    def add_item_to(self, rarity='basic', item=""):
+        print('Try add %s %s' % (rarity, item))
+        if rarity == 'basic':
+            pprint.pprint(self._lf_basic)
+        elif rarity == 'normal':
+            if len(item) == 0:
+                pprint.pprint(self._lf_normal)
+            else:
+                if len(self._lf_normal) < 3:
+                    self._lf_normal = []
+                    self._lf_normal.append("# Normal\n")
+                    self._lf_normal.append("Hide\n")
+                    self._lf_normal.append("\tRarity Normal\n")
+                    self._lf_normal.append("\tBaseType\n")
+                    self._lf_normal.append("\n")
+                self._lf_normal[3] = self._lf_normal[3].strip()
+                self._lf_normal[3] = "\t%s %s\n" % (self._lf_normal[3], item)
+        elif rarity == 'magic':
+            if len(item) == 0:
+                pprint.pprint(self._lf_magic)
+            else:
+                if len(self._lf_magic) < 3:
+                    self._lf_magic = []
+                    self._lf_magic.append("# Magic\n")
+                    self._lf_magic.append("Hide\n")
+                    self._lf_magic.append("\tRarity Magic\n")
+                    self._lf_magic.append("\tBaseType\n")
+                    self._lf_magic.append("\n")
+                self._lf_magic[3] = self._lf_magic[3].strip()
+                self._lf_magic[3] = "\t%s %s\n" % (self._lf_magic[3], item)
+        elif rarity == 'rare':
+            if len(item) == 0:
+                pprint.pprint(self._lf_rare)
+            else:
+                if len(self._lf_rare) < 3:
+                    self._lf_rare = []
+                    self._lf_rare.append("# Rare\n")
+                    self._lf_rare.append("Hide\n")
+                    self._lf_rare.append("\tRarity Rare\n")
+                    self._lf_rare.append("\tBaseType\n")
+                    self._lf_rare.append("\n")
+                self._lf_rare[3] = self._lf_rare[3].strip()
+                self._lf_rare[3] = "\t%s %s\n" % (self._lf_rare[3], item)
 
     def show_track_rect(self):
         self._x1 = 0 if self._lx - self._track_rect_x_step < 0 else self._lx - self._track_rect_x_step
@@ -84,6 +175,7 @@ class PrimeWindow:
     def hide_track_rect(self):
         self._canvas.delete("rect")
         self._track_rect_show=False
+        self._clean_word=""
 
     def increase_rect_width(self):
         self._track_rect_w += 2
@@ -137,9 +229,22 @@ class PrimeWindow:
                 self._update_rect()
             elif key.name == 'f11':         # Take shot and recognize
                 self.take_shot_of_area()
-                
-        else:
-            print(key.char)
+            elif key.name == 'insert':      # Add item to the list or show list
+                #if self._track_rect_show:
+                if self._track_rect_color[self._track_rect_color_index] == 'grey':
+                    rar = 'normal'
+                elif self._track_rect_color[self._track_rect_color_index] == 'blue':
+                    rar = 'magic'
+                elif self._track_rect_color[self._track_rect_color_index] == 'yellow':
+                    rar = 'rare'
+                #else:
+                #    rar = 'basic'
+                self.add_item_to(rarity=rar, item=self._clean_word)
+            elif key.name == 'pause':       # Save to filter
+                self.save_lootfilter_file()
+                self.load_lootfilter_file()
+       # else:
+       #     print(key.char)
 
     def _on_release(self, key):
         pass
