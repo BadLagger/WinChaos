@@ -43,9 +43,12 @@ class PrimeWindow:
         self._lx = 0
         self._ly = 0
         # Lootfilter file
-        self._lf_file_path=r'C:\Users\lanyn\Documents\My Games\Path of Exile\priest.filter'
+        self._lf_file_path=r'C:\Users\lanyn\Documents\My Games\Path of Exile\duelist.filter'
         self.load_lootfilter_file()
         self._clean_word = ""
+        # Item label
+        self._item_lbl_show=False
+        # self._item_lbl = self._item_lbl=self._canvas.create_text(self._item_lbl_x, self._item_lbl_y, font='Arial 23', text='', fill=self._track_rect_color)
 
     def set_track_rectangle(self, width, height):
         self._track_rect_w, self._track_rect_h = width, height
@@ -72,9 +75,16 @@ class PrimeWindow:
                         self._clean_word += ch.lower()
                         if ch == ' ':
                             big_letter=True
-
            # print("Dirty: %s" % word)
             self._clean_word = "\"%s\"" % self._clean_word.strip()
+            if self._clean_word == '"Twopoint Arrow Quiver"':
+                self._clean_word = '"Two-Point Arrow Quiver"'
+            elif self._clean_word == '"Goats Horn"':
+                self._clean_word = '"Goat\'s Horn"'
+            elif self._clean_word == '"Twohanded Sword"':
+                self._clean_word = '"Two-Handed Sword"'
+            elif self._clean_word == '"Scholars Robe"':
+                self._clean_word = '"Scholar\'s Robe"'
             print("Clean: %s" % self._clean_word)
         except Exception as err:
             print(err)
@@ -164,18 +174,29 @@ class PrimeWindow:
                 self._lf_rare[3] = self._lf_rare[3].strip()
                 self._lf_rare[3] = "\t%s %s\n" % (self._lf_rare[3], item)
 
+    def show_item_lbl(self):
+        if self._item_lbl_show == False:
+            self._canvas.create_text(self._x1 + 100, self._y1 - 20, font='Arial 23', text=self._clean_word, fill=self._track_rect_color[self._track_rect_color_index], tags='item_lbl')
+            self._item_lbl_show=True
+    
+    def hide_item_lbl(self):
+        if self._item_lbl_show == True:
+            self._canvas.delete("item_lbl")
+            self._item_lbl_show=False
+
     def show_track_rect(self):
         self._x1 = 0 if self._lx - self._track_rect_x_step < 0 else self._lx - self._track_rect_x_step
         self._y1 = 0 if self._ly - self._track_rect_y_step < 0 else self._ly - self._track_rect_y_step
         self._x2 = self._scr_width if self._lx + self._track_rect_x_step > self._scr_width else self._lx + self._track_rect_x_step
         self._y2 = self._scr_height if self._ly + self._track_rect_y_step > self._scr_height else self._ly + self._track_rect_y_step
         self._canvas.create_rectangle(self._x1, self._y1, self._x2, self._y2, tags="rect", outline=self._track_rect_color[self._track_rect_color_index], width=3)
+        
         self._track_rect_show=True
 
     def hide_track_rect(self):
         self._canvas.delete("rect")
         self._track_rect_show=False
-        self._clean_word=""
+       # self._clean_word=""
 
     def increase_rect_width(self):
         self._track_rect_w += 2
@@ -210,27 +231,34 @@ class PrimeWindow:
             elif key.name == 'f2':          # On/Off Tracking Rectangle
                 if self._track_rect_show:
                     self.hide_track_rect()
+                    self.hide_item_lbl()
                 else:
                     self.show_track_rect()
             elif key.name == 'f3':          # Change Rectange Color (Rarity)
                 self._track_rect_color_index = 0 if self._track_rect_color_index >= 2 else self._track_rect_color_index + 1
-                self.show_track_rect()
+                self._update_rect()
+                self._update_item_lbl()
             elif key.name == 'f4':          # Manual increase width
                 self.increase_rect_width()
                 self._update_rect()
+                self._update_item_lbl()
             elif key.name == 'f5':          # Manual decrease width
                 self.decrease_rect_width()
                 self._update_rect()
+                self._update_item_lbl()
             elif key.name == 'f9':          # Manual increase height
                 self.increase_rect_height()
                 self._update_rect()
+                self._update_item_lbl()
             elif key.name == 'f10':          # Manual decrease height
                 self.decrease_rect_height()
+                self._update_item_lbl()
                 self._update_rect()
             elif key.name == 'f11':         # Take shot and recognize
                 self.take_shot_of_area()
+                #self._update_rect()
+                self._update_item_lbl()
             elif key.name == 'insert':      # Add item to the list or show list
-                #if self._track_rect_show:
                 if self._track_rect_color[self._track_rect_color_index] == 'grey':
                     rar = 'normal'
                 elif self._track_rect_color[self._track_rect_color_index] == 'blue':
@@ -239,10 +267,13 @@ class PrimeWindow:
                     rar = 'rare'
                 #else:
                 #    rar = 'basic'
+                if len(self._clean_word) == 0:
+                    print('Empty clean word')
                 self.add_item_to(rarity=rar, item=self._clean_word)
             elif key.name == 'pause':       # Save to filter
                 self.save_lootfilter_file()
                 self.load_lootfilter_file()
+                self.hide_item_lbl()
        # else:
        #     print(key.char)
 
@@ -254,10 +285,15 @@ class PrimeWindow:
         self._lx, self._ly = x, y
         if self._track_rect_show:
             self._update_rect()
+            self._update_item_lbl()
 
     def _update_rect(self):
         self.hide_track_rect()
         self.show_track_rect()
+    
+    def _update_item_lbl(self):
+        self.hide_item_lbl()
+        self.show_item_lbl()
         
 
         
