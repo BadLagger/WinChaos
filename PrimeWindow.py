@@ -9,6 +9,7 @@ from pathlib import Path
 from win32api import GetSystemMetrics
 import os
 import pprint
+from ActionRecord import ActionRecord
 
 
 class PrimeWindow:
@@ -48,6 +49,7 @@ class PrimeWindow:
         self._clean_word = ""
         # Item label
         self._item_lbl_show=False
+        self.__ac = ActionRecord() 
         # self._item_lbl = self._item_lbl=self._canvas.create_text(self._item_lbl_x, self._item_lbl_y, font='Arial 23', text='', fill=self._track_rect_color)
 
     def set_track_rectangle(self, width, height):
@@ -85,6 +87,8 @@ class PrimeWindow:
                 self._clean_word = '"Two-Handed Sword"'
             elif self._clean_word == '"Scholars Robe"':
                 self._clean_word = '"Scholar\'s Robe"'
+            elif self._clean_word == '"Cats Paw"':
+                self._clean_word = '"Cat\'s Paw"'
             print("Clean: %s" % self._clean_word)
         except Exception as err:
             print(err)
@@ -129,6 +133,7 @@ class PrimeWindow:
                 file.write(line)
             for line in self._lf_rare:
                 file.write(line)
+        self.__ac.update_filter(self._lx, self._ly)
 
     def add_item_to(self, rarity='basic', item=""):
         print('Try add %s %s' % (rarity, item))
@@ -224,7 +229,7 @@ class PrimeWindow:
 
     def _on_press(self, key):
         if str(type(key)) == "<enum 'Key'>":
-          #  print(key.name, key.value)
+            #print(key.name, key.value)
             if key.name == 'f6':           # Exit from Drawer
                 self._win.destroy()
                 exit()
@@ -281,7 +286,7 @@ class PrimeWindow:
         pass
 
     def _ms_move(self, x, y):
-       # print('Mouse move: x - %d y - %d' % (x, y))
+        #print('Mouse move: x - %d y - %d' % (x, y))
         self._lx, self._ly = x, y
         if self._track_rect_show:
             self._update_rect()

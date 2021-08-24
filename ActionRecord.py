@@ -1,12 +1,38 @@
 from pynput import keyboard, mouse
 from pprint import pprint
 from pickle import dump, load
+from time import sleep
 
 class ActionRecord:
     def __init__(self):
         self.__action=[]
         self.__kbd_ctrl = keyboard.Controller()
         self.__ms_ctrl = mouse.Controller()
+        self.__act_delay = 0.1
+    
+    def update_filter(self, current_ms_x, current_ms_y):
+        self.__kbd_ctrl.press(keyboard.Key.esc)
+        sleep(self.__act_delay)
+        self.__kbd_ctrl.release(keyboard.Key.esc)
+        sleep(self.__act_delay)
+        self.__ms_ctrl.position = (1974, 701)
+        sleep(self.__act_delay)
+        self.__ms_ctrl.click(mouse.Button.left, 1)
+        sleep(self.__act_delay)
+        self.__ms_ctrl.position = (406, 243)
+        sleep(self.__act_delay)
+        self.__ms_ctrl.click(mouse.Button.left, 1)
+        sleep(self.__act_delay)
+        self.__ms_ctrl.position = (1065, 438)
+        sleep(self.__act_delay)
+        self.__ms_ctrl.click(mouse.Button.left, 1)
+        sleep(self.__act_delay)
+        self.__kbd_ctrl.press(keyboard.Key.esc)
+        sleep(self.__act_delay)
+        self.__kbd_ctrl.release(keyboard.Key.esc)
+        sleep(self.__act_delay)
+        self.__ms_ctrl.position = (current_ms_x, current_ms_y)
+        
 
     def start_record(self, stop_key=''):
         self.__kbd_lis = keyboard.Listener(on_press=self.__on_kbd_press, suppress=False)
