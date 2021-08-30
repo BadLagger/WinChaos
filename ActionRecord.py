@@ -8,7 +8,7 @@ class ActionRecord:
         self.__action=[]
         self.__kbd_ctrl = keyboard.Controller()
         self.__ms_ctrl = mouse.Controller()
-        self.__act_delay = 0.1
+        self.__act_delay = 0.18
     
     def update_filter(self, current_ms_x, current_ms_y):
         self.__kbd_ctrl.press(keyboard.Key.esc)

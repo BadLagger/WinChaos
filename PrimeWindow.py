@@ -20,19 +20,18 @@ class PrimeWindow:
         self._win.lift()
         self._win.wm_attributes("-topmost", True)
         self._win.wm_attributes("-transparentcolor", "white")
-        self._scr_width = GetSystemMetrics(0)
-        self._scr_height = GetSystemMetrics(1)
-       # print("w: %d h: %d" % (self._scr_width, self._scr_height))
+        self._scr_width = GetSystemMetrics(0) - 5
+        self._scr_height = GetSystemMetrics(1) - 5
         # Canvas setting
         self._canvas = Canvas(self._win, width=self._scr_width, height=self._scr_height, bg='white')
         self._canvas.pack()
         self._canvas.last_mouse_x = 0
         self._canvas.last_mouse_y = 0
         # Tracking rectangle
-        self._track_rect_w=0
-        self._track_rect_h=0
-        self._track_rect_show=False
-        self._track_rect_color_index=0
+        self._track_rect_w = 0
+        self._track_rect_h = 0
+        self._track_rect_show = False
+        self._track_rect_color_index = 0
         self._track_rect_color = ['grey', 'blue', 'yellow']
         # Picture
         self._scrshot_save_name='src.png'
@@ -50,7 +49,6 @@ class PrimeWindow:
         # Item label
         self._item_lbl_show=False
         self.__ac = ActionRecord() 
-        # self._item_lbl = self._item_lbl=self._canvas.create_text(self._item_lbl_x, self._item_lbl_y, font='Arial 23', text='', fill=self._track_rect_color)
 
     def set_track_rectangle(self, width, height):
         self._track_rect_w, self._track_rect_h = width, height
@@ -65,7 +63,7 @@ class PrimeWindow:
                 os.remove(self._scrshot_save_name)
             im = ImageGrab.grab(backend="pil", bbox=(int(self._x1), int(self._y1), int(self._x2), int(self._y2)))
             im.save(self._scrshot_save_name)
-            word=image_to_string(Image.open(self._scrshot_save_name))
+            word=image_to_string(Image.open(self._scrshot_save_name), lang='rus')
             self._clean_word=""
             big_letter=True
             for ch in word:
@@ -77,7 +75,7 @@ class PrimeWindow:
                         self._clean_word += ch.lower()
                         if ch == ' ':
                             big_letter=True
-           # print("Dirty: %s" % word)
+            
             self._clean_word = "\"%s\"" % self._clean_word.strip()
             if self._clean_word == '"Twopoint Arrow Quiver"':
                 self._clean_word = '"Two-Point Arrow Quiver"'
@@ -89,6 +87,15 @@ class PrimeWindow:
                 self._clean_word = '"Scholar\'s Robe"'
             elif self._clean_word == '"Cats Paw"':
                 self._clean_word = '"Cat\'s Paw"'
+            elif self._clean_word == '"Mages Vestment"':
+                self._clean_word = '"Mage\'s Vestment"'
+            elif self._clean_word == '"Thiefs Garb"':
+                self._clean_word = '"Thief\'s Garb"'
+            elif self._clean_word == '"Soldiers Brigandine"':
+                self._clean_word = '"Soldier\'s Brigandine"'
+            elif self._clean_word == '"Sages Robe"':
+                self._clean_word = '"Sage\'s Robe"'
+                
             print("Clean: %s" % self._clean_word)
         except Exception as err:
             print(err)
@@ -229,7 +236,6 @@ class PrimeWindow:
 
     def _on_press(self, key):
         if str(type(key)) == "<enum 'Key'>":
-            #print(key.name, key.value)
             if key.name == 'f6':           # Exit from Drawer
                 self._win.destroy()
                 exit()
@@ -270,8 +276,7 @@ class PrimeWindow:
                     rar = 'magic'
                 elif self._track_rect_color[self._track_rect_color_index] == 'yellow':
                     rar = 'rare'
-                #else:
-                #    rar = 'basic'
+                
                 if len(self._clean_word) == 0:
                     print('Empty clean word')
                 self.add_item_to(rarity=rar, item=self._clean_word)
@@ -286,7 +291,6 @@ class PrimeWindow:
         pass
 
     def _ms_move(self, x, y):
-        #print('Mouse move: x - %d y - %d' % (x, y))
         self._lx, self._ly = x, y
         if self._track_rect_show:
             self._update_rect()
