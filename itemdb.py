@@ -11,15 +11,13 @@ class ItemDb:
         if self.__db_con == None:
             try:
                 self.__db_con = connect(self.__db_file)
-                # Create basic tables
-                self.__simple_request("CREATE TABLE IF NOT EXISTS ru_translate(" \
-                                          "id INTEGER PRIMARY KEY, translate TEXT NOT NULL);")
-                
-                self.__simple_request("CREATE TABLE IF NOT EXISTS equipment(" \
-                                          "id INTEGER PRIMARY KEY, name TEXT NOT NULL," \
-                                          "ru_translate_id INTEGER,"\
-                                          "FOREIGN KEY (ru_translate_id) REFERENCES ru_translate (id));")
-                
+                tab_list = self.get_tables()
+                self.__item_tabs_list = []
+                for tab in tab_list:
+                    if tab != 'sqlite_sequence' and tab != 'alternatives':
+                        self.__item_tabs_list.append(tab)
+               # print(self.__tab_list)
+               # print(self.__item_tabs_list)
             except Error as db_err:
                 self.__db_con = None
                 print('db %s connection error: %s' % (self.__db_file, db_err))
@@ -33,43 +31,41 @@ class ItemDb:
         return self.__simple_request('SELECT sqlite_version();')
 
     def get_tables(self):
-        return self.__simple_request("SELECT name FROM sqlite_master WHERE type='table';")
+        ret_list = self.__simple_request("SELECT name FROM sqlite_master WHERE type='table'")
+        return [el[0] for el in ret_list]
+
+    def search_for_item(self, item_name=None, item_translate=None):
+        if item_name != None:
+            for tab in self.__item_tabs_list:
+                result = self.__simple_request("SELECT * FROM %s WHERE name = '%s'" % (tab, item_name))
+                if len(result) != 0:
+                    return result
+            return None
+
+        if item_translate != None:
+            for tab in self.__item_tabs_list:
+                result = self.__simple_request("SELECT * FROM %s WHERE ru_translation = '%s'" % (tab, item_translate))
+                if len(result) != 0:
+                    return result
+        
+        return None;
+
+    def check_for_alternatives(self, item_name):
+        result = self.__simple_request("SELECT * FROM alternatives WHERE name = '%s'" % item_name)
+        if len(result) != 0:
+            return result
+
+        return None
 
     def get_table(self, tab):
         return self.__simple_request("SELECT * FROM %s;" % tab)
 
     def get_table_size(self, tab_name):
         return self.__simple_request("SELECT count(*) FROM %s;" % tab_name)
-
-    def add_to_table(self, tab_name, value, col='name'):
-        if self.__db_con != None:
-            tab_current_id = self.get_table_size(tab)[0][0] + 1
-            cur = self.__db_con.cursor()
-            cur.execute("INSERT INTO %s (id, %s) VALUES (%d, '%s')" % (tab_name, col, tab_current_id, value))
-            cur.close()
-            self.__db_con.commit()
-
-    def delete_table(self, tab):
-        if self.__db_con != None:
-            cur = self.__db_con.cursor()
-            cur.execute("DROP TABLE IF EXISTS %s" % tab)
-            cur.close()
-            self.__db_con.commit()
-
-    def set_translation(self, tab, tab_id, trans_id):
-        if self.__db_con != None:
-            cur = self.__db_con.cursor()
-            cur.execute("UPDATE %s SET ru_translate_id = %d WHERE id = %d" % (tab, trans_id, tab_id))
-            cur.close()
-            self.__db_con.commit()
-
-    def get_translation(self, tab, word):
-        return self.__simple_request("SELECT translate FROM ru_translate WHERE id = (SELECT ru_translate_id FROM %s WHERE name = '%s');" % (tab, word))
         
     def get_tab_raw(self, tab, id):
         return self.__simple_request("SELECT * FROM %s WHERE id = %d;" % (tab, id))
         
-
     def __simple_request(self, req):
         ret = None
         if self.__db_con != None:
@@ -83,21 +79,18 @@ class ItemDb:
 if __name__ == '__main__':
     print('Hello dbg itemdb.py')
     i_db = ItemDb('items.db')
-    #i_db.delete_table('ru_translate')
-    print(i_db.get_version())
-
-    #i_db.set_translation('equipment', 1, 1)
-    tables = i_db.get_tables()
-    for tab in tables:
-        tab_size = i_db.get_table_size(tab[0])[0][0]
-        print("Table: %s with size %d" % (tab[0], tab_size))
-        if tab_size > 0:
-            for n in range(1, tab_size + 1):
-                print("  Row %d: %s" % (n, i_db.get_tab_raw(tab[0], n)))
-
-    #i_db.add_to_table('ru_translate', 'броня', 'translate')
-    #print(i_db.get_table('ru_translate'))
-    #i_db.add_to_table('equipment', 'armour')
-    #
-    print(i_db.get_translation('equipment', 'armour'))
+    item = 'Windbreak Boots'
+    result = i_db.check_for_alternatives(item)
+    if result != None:
+        print(result)
+        in_data = result[0]
+        result = i_db.get_tab_raw(tab=in_data[2], id=in_data[3])
+        print(result)
+    else:
+        result = i_db.search_for_item(item_name=item)
+        if result != None:
+            print(result)
+        else:
+            print("No item found")
+        
     i_db.close()
