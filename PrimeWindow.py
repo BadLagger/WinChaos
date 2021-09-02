@@ -10,6 +10,7 @@ from win32api import GetSystemMetrics
 import os
 import pprint
 from ActionRecord import ActionRecord
+from cfg import Cfg
 
 
 class PrimeWindow:
@@ -43,7 +44,8 @@ class PrimeWindow:
         self._lx = 0
         self._ly = 0
         # Lootfilter file
-        self._lf_file_path=r'C:\Users\lanyn\Documents\My Games\Path of Exile\duelist.filter'
+        self._cfg = Cfg("sets.cfg")
+        self._lf_file_path=cfg.get_filter()
         self.load_lootfilter_file()
         self._clean_word = ""
         # Item label
@@ -63,7 +65,7 @@ class PrimeWindow:
                 os.remove(self._scrshot_save_name)
             im = ImageGrab.grab(backend="pil", bbox=(int(self._x1), int(self._y1), int(self._x2), int(self._y2)))
             im.save(self._scrshot_save_name)
-            word=image_to_string(Image.open(self._scrshot_save_name), lang='rus')
+            word=image_to_string(Image.open(self._scrshot_save_name), lang=self._cfg.get_language())
             self._clean_word=""
             big_letter=True
             for ch in word:
