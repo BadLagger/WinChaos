@@ -45,7 +45,7 @@ class PrimeWindow:
         self._ly = 0
         # Lootfilter file
         self._cfg = Cfg("sets.cfg")
-        self._lf_file_path=cfg.get_filter()
+        self._lf_file_path=self._cfg.get_filter()
         self.load_lootfilter_file()
         self._clean_word = ""
         # Item label
@@ -63,7 +63,7 @@ class PrimeWindow:
             pic_file = Path(self._scrshot_save_name)
             if pic_file.is_file():
                 os.remove(self._scrshot_save_name)
-            im = ImageGrab.grab(backend="pil", bbox=(int(self._x1), int(self._y1), int(self._x2), int(self._y2)))
+            im = ImageGrab.grab(backend="pil", bbox=(int(self._x1+3), int(self._y1+3), int(self._x2-3), int(self._y2-3)))
             im.save(self._scrshot_save_name)
             word=image_to_string(Image.open(self._scrshot_save_name), lang=self._cfg.get_language())
             self._clean_word=""
@@ -97,8 +97,20 @@ class PrimeWindow:
                 self._clean_word = '"Soldier\'s Brigandine"'
             elif self._clean_word == '"Sages Robe"':
                 self._clean_word = '"Sage\'s Robe"'
+            elif self._clean_word == '"Tigers Paw"':
+                self._clean_word = '"Tiger\'s Paw"'
                 
             print("Clean: %s" % self._clean_word)
+        except Exception as err:
+            print(err)
+
+    def just_shot(self, x1, y1, x2, y2, file_name):
+        try:
+            pic_file = Path(file_name)
+            if pic_file.is_file():
+                os.remove(file_name)
+            im = ImageGrab.grab(backend="pil", bbox=(x1, y1, x2, y2))
+            im.save(file_name)
         except Exception as err:
             print(err)
 
