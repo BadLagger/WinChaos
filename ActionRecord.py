@@ -72,6 +72,11 @@ class ActionRecord:
                 self.__ms_ctrl.press(act['btn'])
                 self.__ms_ctrl.release(act['btn'])
 
+    def press_key_f6(self):
+        self.__kbd_ctrl.press(keyboard.Key.f6)
+        sleep(self.__act_delay)
+        self.__kbd_ctrl.release(keyboard.Key.f6)
+
     def __on_kbd_press(self, key):
         act = {'press':'kbd'}
         if str(type(key)) == "<enum 'Key'>":
