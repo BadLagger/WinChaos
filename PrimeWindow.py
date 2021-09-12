@@ -11,6 +11,7 @@ import os
 import pprint
 from ActionRecord import ActionRecord
 from cfg import Cfg
+from trayicon import IconTrayStart, IconTrayQuit
 
 
 class PrimeWindow:
@@ -50,7 +51,10 @@ class PrimeWindow:
         self._clean_word = ""
         # Item label
         self._item_lbl_show=False
-        self.__ac = ActionRecord() 
+        self.__ac = ActionRecord()
+        # Tray Icon
+        print(self._cfg.get_trayicon())
+        IconTrayStart("WinChaos", self._cfg.get_trayicon(), self.__ac.press_key_f6)
 
     def set_track_rectangle(self, width, height):
         self._track_rect_w, self._track_rect_h = width, height
@@ -251,8 +255,7 @@ class PrimeWindow:
     def _on_press(self, key):
         if str(type(key)) == "<enum 'Key'>":
             if key.name == 'f6':           # Exit from Drawer
-                self._win.destroy()
-                exit()
+                self._app_close()
             elif key.name == 'f2':          # On/Off Tracking Rectangle
                 if self._track_rect_show:
                     self.hide_track_rect()
@@ -286,7 +289,7 @@ class PrimeWindow:
             elif key.name == 'insert':      # Add item to the list or show list
                 if self._track_rect_color[self._track_rect_color_index] == 'grey':
                     rar = 'normal'
-                elif self._track_rect_color[self._track_rect_color_index] == 'blue':
+                elif self._track_rect_color[self._2track_rect_color_index] == 'blue':
                     rar = 'magic'
                 elif self._track_rect_color[self._track_rect_color_index] == 'yellow':
                     rar = 'rare'
@@ -317,6 +320,11 @@ class PrimeWindow:
     def _update_item_lbl(self):
         self.hide_item_lbl()
         self.show_item_lbl()
+
+    def _app_close(self):
+        IconTrayQuit()
+        self._win.destroy()
+        exit()
         
 
         
